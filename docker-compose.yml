@@ -1,0 +1,63 @@
+services:
+  spring:
+    build:
+      context: ./complaint-orchestrator
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  fastapi:
+    build:
+      context: ./ai-dispatcher
+      dockerfile: Dockerfile
+    env_file: .env
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-net
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - spring
+      - fastapi
+    networks:
+      - app-net
+    restart: unless-stopped
+
+networks:
+  app-net:
+
+volumes:
+  postgres-data:
+  redis-data:
+  vector-db-data:

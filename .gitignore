@@ -1,0 +1,107 @@
+# ======================
+# OS
+# ======================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ======================
+# IDE — IntelliJ
+# ======================
+.idea/
+*.iml
+*.iws
+*.ipr
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# ======================
+# IDE — VSCode
+# ======================
+.vscode/
+*.code-workspace
+
+# ======================
+# Spring (Gradle)
+# ======================
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+*.class
+*.jar
+*.war
+*.ear
+spring-shell.log
+
+# ======================
+# FastAPI / Python
+# ======================
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ======================
+# Environment
+# ======================
+.env
+.env.*
+
+# ======================
+# Docker
+# ======================
+docker-compose.override.yml
+
+# ======================
+# Data volumes
+# ======================
+/data/postgres/*
+/data/redis/*
+/data/vector-db/*
+!.gitkeep
+
+# ======================
+# Kafka
+# ======================
+kafka-data/
+kafka-logs/
+zookeeper-data/
+
+# ======================
+# Nginx
+# ======================
+nginx/logs/
+
+# ======================
+# Logs
+# ======================
+logs/
+*.log
