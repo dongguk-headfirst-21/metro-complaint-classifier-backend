@@ -1,11 +1,15 @@
 package edu.dongguk.complaint.orchestrator.domain.file;
 
+import edu.dongguk.complaint.orchestrator.domain.complaint.Complaint;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "file")
@@ -34,10 +38,22 @@ public class File {
     @Column(name = "error_message")
     private String errorMessage;
 
+    @OneToMany(mappedBy = "file", cascade = CascadeType.ALL)
+    private List<Complaint> complaints = new ArrayList<>();
+
+    @Builder
     public File(String fileName, int rowCount) {
         this.fileName = fileName;
         this.rowCount = rowCount;
         this.uploadedAt = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
         this.status = FileStatus.UPLOADING;
+    }
+
+    public void updateStatus(FileStatus status) {
+        this.status = status;
+    }
+
+    public void updateRowCount(int rowCount) {
+        this.rowCount = rowCount;
     }
 }
