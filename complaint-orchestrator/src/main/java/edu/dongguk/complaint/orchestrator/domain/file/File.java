@@ -26,7 +26,7 @@ public class File {
     private int rowCount;
 
     @Column
-    private int capacity;
+    private long capacity;
 
     @Column(name = "uploaded_at", nullable = false)
     private LocalDateTime uploadedAt;
@@ -55,5 +55,9 @@ public class File {
 
     public void updateRowCount(int rowCount) {
         this.rowCount = rowCount;
+    }
+
+    public void updateCapacity(long capacity) {
+        this.capacity = capacity;
     }
 }

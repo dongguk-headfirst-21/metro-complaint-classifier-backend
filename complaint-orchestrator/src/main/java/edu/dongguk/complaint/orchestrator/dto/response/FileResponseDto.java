@@ -16,7 +16,7 @@ public record FileResponseDto(
         String name,
 
         @NotNull
-        int capacity,
+        long capacity,
 
         int complaintCount,
 

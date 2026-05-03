@@ -30,6 +30,7 @@ public class FileUploadService {
 
     public Long uploadFile(MultipartFile multipartFile) throws IOException {
         File file = new File(multipartFile.getOriginalFilename(), 0);
+        file.updateCapacity(multipartFile.getSize());
         fileRepository.save(file);
 
         List<ComplaintData> dataList = excelParser.parse(multipartFile);
