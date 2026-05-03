@@ -7,11 +7,4 @@ import java.util.List;
 public record FileListResponseDto(
         List<FileResponseDto> files
 ) {
-    public static FileListResponseDto from(List<File> files) {
-        return new FileListResponseDto(
-                files.stream()
-                        .map(FileResponseDto::from)
-                        .toList()
-        );
-    }
 }
