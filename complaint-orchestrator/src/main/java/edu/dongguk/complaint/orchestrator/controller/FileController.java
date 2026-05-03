@@ -1,5 +1,6 @@
 package edu.dongguk.complaint.orchestrator.controller;
 
+import edu.dongguk.complaint.orchestrator.dto.response.DepartListComplaintResponseDto;
 import edu.dongguk.complaint.orchestrator.dto.response.FileListResponseDto;
 import edu.dongguk.complaint.orchestrator.service.command.FileUploadService;
 import edu.dongguk.complaint.orchestrator.service.query.FileQueryService;
@@ -35,5 +36,10 @@ public class FileController {
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe() {
         return sseEmitterService.subscribe();
+    }
+
+    @GetMapping(value = "/{fileId}")
+    public ResponseEntity<DepartListComplaintResponseDto> getFileResult(@PathVariable Long fileId) {
+        return ResponseEntity.ok(fileQueryService.getFileResult(fileId));
     }
 }
