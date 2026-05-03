@@ -20,6 +20,8 @@ public class SseEmitterService {
         emitters.put(id, emitter);
         emitter.onCompletion(() -> emitters.remove(id));
         emitter.onTimeout(() -> emitters.remove(id));
+        emitter.onError(e -> emitters.remove(id));
+
         return emitter;
     }
 
