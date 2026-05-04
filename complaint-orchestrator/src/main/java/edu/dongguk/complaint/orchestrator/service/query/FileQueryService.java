@@ -12,6 +12,7 @@ import edu.dongguk.complaint.orchestrator.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import scala.collection.Set;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -45,19 +46,23 @@ public class FileQueryService {
         // 1. 특정 부서에 분류된 민원 count
         List<Object[]> classified = complaintRepository.countComplaintsByDepart(fileId);
 
-        // 2. 분류되지 않은 민원 count
+        // 2. isChecked==false인 민원이 있는 부서 id
+        List<Depart> uncheckedDeparts = complaintRepository.findDepartsWithUnchecked(fileId);
+
+        // 3. 분류되지 않은 민원 count
         Long unclassified = complaintRepository.countUnclassifiedComplaints(fileId);
 
-        // 3. 분류된 민원을 DTO로 반환
+        // 4. 분류된 민원을 DTO로 반환
         List<DepartComplaintResponseDto> departs = classified.stream()
                 .map(row -> {
                     Depart depart = (Depart) row[0];
                     Long count = (Long) row[1];
-                    return DepartComplaintResponseDto.from(depart, count, false);
+                    boolean isChecked = !uncheckedDeparts.contains(depart.getId());
+                    return DepartComplaintResponseDto.from(depart, count, isChecked);
                 })
                 .toList();
 
-        // 4. 미분류 그룹 추가
+        // 5. 미분류 그룹 추가
         if (unclassified > 0) {
             departs = new ArrayList<>(departs);
             departs.add(new DepartComplaintResponseDto(null, "미분류", unclassified, false));
