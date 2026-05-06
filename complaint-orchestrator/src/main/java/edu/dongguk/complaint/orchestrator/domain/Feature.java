@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "feature")
 @NoArgsConstructor
@@ -16,7 +19,6 @@ public class Feature {
     @Column(nullable = false, length = 255)
     private String content;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "depart_id", nullable = false)
-    private Depart depart;
+    @OneToMany(mappedBy = "feature", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FeatureDepart> featureDeparts = new ArrayList<>();
 }
