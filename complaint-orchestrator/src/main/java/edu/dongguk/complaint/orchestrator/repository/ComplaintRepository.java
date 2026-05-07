@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findAllByFileId(Long fileId);
+    List<Complaint> findByDepartId(Long departId);
 
     @Query("SELECT COUNT(DISTINCT c.depart.id) FROM Complaint c WHERE c.file.id = :fileId AND c.isChecked = true")
     long countCheckedDepartsByFileId(@Param("fileId") Long fileId);

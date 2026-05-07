@@ -1,6 +1,7 @@
 package edu.dongguk.complaint.orchestrator.controller;
 
 import edu.dongguk.complaint.orchestrator.dto.response.ComplaintListResponseDto;
+import edu.dongguk.complaint.orchestrator.service.query.ComplaintQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
