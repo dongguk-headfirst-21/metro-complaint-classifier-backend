@@ -12,7 +12,6 @@ import edu.dongguk.complaint.orchestrator.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import scala.collection.Set;
 
 import java.util.List;
 import java.util.ArrayList;
