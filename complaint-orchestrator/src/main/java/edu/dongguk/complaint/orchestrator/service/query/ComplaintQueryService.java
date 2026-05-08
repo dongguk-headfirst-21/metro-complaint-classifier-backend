@@ -7,6 +7,8 @@ import edu.dongguk.complaint.orchestrator.dto.response.ComplaintResponseDto;
 import edu.dongguk.complaint.orchestrator.repository.ComplaintRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,11 +19,14 @@ import java.util.List;
 public class ComplaintQueryService {
     private final ComplaintRepository complaintRepository;
 
-    public ComplaintListResponseDto getComplaints(Long departId){
-        List<ComplaintResponseDto> complaints = complaintRepository.findByDepartId(departId)
+    public ComplaintListResponseDto getComplaints(Long departId, Pageable pageable) {
+
+        Slice<Complaint> slice = complaintRepository.findByDepartId(departId, pageable);
+
+        List<ComplaintResponseDto> complaints = slice
                 .stream()
                 .map(complaint -> ComplaintResponseDto.from(complaint))
                 .toList();
-        return new ComplaintListResponseDto(complaints);
+        return new ComplaintListResponseDto(complaints, slice.hasNext());
     }
 }

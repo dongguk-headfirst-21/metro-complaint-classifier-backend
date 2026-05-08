@@ -2,6 +2,8 @@ package edu.dongguk.complaint.orchestrator.repository;
 
 import edu.dongguk.complaint.orchestrator.domain.Depart;
 import edu.dongguk.complaint.orchestrator.domain.complaint.Complaint;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +13,7 @@ import java.util.List;
 
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findAllByFileId(Long fileId);
-    List<Complaint> findByDepartId(Long departId);
+    Slice<Complaint> findByDepartId(Long departId, Pageable pageable);
 
     @Query("SELECT COUNT(DISTINCT c.depart.id) FROM Complaint c WHERE c.file.id = :fileId AND c.isChecked = true")
     long countCheckedDepartsByFileId(@Param("fileId") Long fileId);
