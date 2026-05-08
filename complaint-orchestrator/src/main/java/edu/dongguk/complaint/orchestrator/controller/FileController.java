@@ -1,6 +1,7 @@
 package edu.dongguk.complaint.orchestrator.controller;
 
 import edu.dongguk.complaint.orchestrator.dto.request.DepartListRequestDto;
+import edu.dongguk.complaint.orchestrator.dto.response.DepartListComplaintResponseDto;
 import edu.dongguk.complaint.orchestrator.dto.response.FileListResponseDto;
 import edu.dongguk.complaint.orchestrator.service.command.DepartCheckService;
 import edu.dongguk.complaint.orchestrator.service.command.FileUploadService;
@@ -48,5 +49,8 @@ public class FileController {
     ) {
         departCheckService.checkDeparts(fileId, requestDto);
         return ResponseEntity.ok().build();
+    @GetMapping(value = "/{fileId}")
+    public ResponseEntity<DepartListComplaintResponseDto> getFileResult(@PathVariable Long fileId) {
+        return ResponseEntity.ok(fileQueryService.getFileResult(fileId));
     }
 }

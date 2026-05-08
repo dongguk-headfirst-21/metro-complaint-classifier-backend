@@ -1,6 +1,7 @@
 package edu.dongguk.complaint.orchestrator.domain.complaint;
 
 import edu.dongguk.complaint.orchestrator.domain.Depart;
+import edu.dongguk.complaint.orchestrator.domain.ProcessCodeType;
 import edu.dongguk.complaint.orchestrator.domain.file.File;
 import jakarta.persistence.*;
 import lombok.Builder;
@@ -21,8 +22,9 @@ public class Complaint {
     @Column(nullable = false, length = 2000)
     private String content;
 
-    @Column
-    private Short code;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "code")
+    private ProcessCodeType processCodeType;
 
     @Column(name = "is_checked", nullable = false)
     private boolean isChecked;
