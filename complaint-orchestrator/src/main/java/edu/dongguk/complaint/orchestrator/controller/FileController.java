@@ -49,6 +49,7 @@ public class FileController {
     ) {
         departCheckService.checkDeparts(fileId, requestDto);
         return ResponseEntity.ok().build();
+    }
     @GetMapping(value = "/{fileId}")
     public ResponseEntity<DepartListComplaintResponseDto> getFileResult(@PathVariable Long fileId) {
         return ResponseEntity.ok(fileQueryService.getFileResult(fileId));
