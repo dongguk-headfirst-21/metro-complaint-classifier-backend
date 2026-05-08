@@ -2,7 +2,6 @@ package edu.dongguk.complaint.orchestrator.infra;
 
 import lombok.RequiredArgsConstructor;
 import org.flywaydb.core.api.MigrationInfo;
-import org.flywaydb.core.api.MigrationState;
 import org.flywaydb.core.api.callback.Callback;
 import org.flywaydb.core.api.callback.Context;
 import org.flywaydb.core.api.callback.Event;
@@ -30,8 +29,7 @@ public class EmbeddingTriggerCallback implements Callback {
     public void handle(Event event, Context context) {
         if (event == Event.AFTER_EACH_MIGRATE) {
             MigrationInfo info = context.getMigrationInfo();
-            if ("15".equals(info.getVersion().getVersion()) &&
-                    info.getState() == MigrationState.SUCCESS) {
+            if ("15".equals(info.getVersion().getVersion())) {
                 v15WasApplied = true;
             }
         }
