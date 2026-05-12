@@ -17,7 +17,7 @@ async def start_producer() -> None:
     
     _producer = AIOKafkaProducer(
         bootstrap_servers=settings.kafka_bootstrap_servers,
-        value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode("utf-8"),
+        value_serializer=lambda v: str(v).encode("utf-8"),
         acks="all"
     )
     
@@ -35,7 +35,7 @@ async def stop_producer() -> None:
         logger.info("Kafka 프로듀서 종료 완료")
         _producer = None
 
-async def publish_classification_response() -> None:
+async def publish_classification_response(file_id: int) -> None:
     """
     예측 완료 토픽 발행
     """
@@ -46,9 +46,7 @@ async def publish_classification_response() -> None:
 
     await _producer.send_and_wait(
         settings.kafka_topic_classification_response,
-        value={
-            "event": "classification-response"
-        }
+        value=str(file_id)
     )
     
     logger.info("예측 결과 발행 완료")
