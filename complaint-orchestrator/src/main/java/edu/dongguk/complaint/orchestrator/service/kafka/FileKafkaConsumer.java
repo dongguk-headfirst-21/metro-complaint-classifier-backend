@@ -30,7 +30,7 @@ public class FileKafkaConsumer {
         List<Complaint> complaints = complaintRepository.findAllByFileId(id);
 
         boolean hasError = complaints.stream()
-                .anyMatch(c -> c.getStatus() == ComplaintStatus.FAILED);
+                .anyMatch(c -> c.getStatus() != ComplaintStatus.COMPLETED);
 
         FileStatus newStatus = hasError ? FileStatus.ERROR : FileStatus.COMPLETED;
 
