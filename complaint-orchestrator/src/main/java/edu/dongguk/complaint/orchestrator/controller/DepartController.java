@@ -2,6 +2,7 @@ package edu.dongguk.complaint.orchestrator.controller;
 
 import edu.dongguk.complaint.orchestrator.dto.response.ComplaintListResponseDto;
 import edu.dongguk.complaint.orchestrator.service.query.ComplaintQueryService;
+import edu.dongguk.complaint.orchestrator.service.command.DepartCheckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DepartController {
     private final ComplaintQueryService complaintQueryService;
-
+    private final DepartCheckService departCheckService;
 
     @GetMapping("/{departId}")
     public ResponseEntity<ComplaintListResponseDto> getComplaints(
@@ -22,5 +23,11 @@ public class DepartController {
             @RequestParam(defaultValue = "10") int  size){
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(complaintQueryService.getComplaints(departId,  pageable));
+    }
+
+    @PatchMapping("/{departId}/uncheck")
+    public ResponseEntity<Void> uncheckDepart(@PathVariable Long departId) {
+        departCheckService.uncheckDepart(departId);
+        return ResponseEntity.ok().build();
     }
 }
