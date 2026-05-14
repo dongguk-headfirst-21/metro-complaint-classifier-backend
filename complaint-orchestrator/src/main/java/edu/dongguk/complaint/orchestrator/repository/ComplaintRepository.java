@@ -33,4 +33,9 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     // 특정 부서로 분류되지 않은 전체 민원 개수 반환
     @Query("SELECT COUNT(c) FROM Complaint c WHERE c.file.id = :fileId AND c.depart IS NULL")
     Long countUnclassifiedComplaints(@Param("fileId") Long fileId);
+
+    // 특정 부서의 민원 확인을 취소하는 query
+    @Modifying
+    @Query("UPDATE Complaint c SET c.isChecked = false WHERE c.depart.id = :departId")
+    void uncheckComplaintsByDepartId(@Param("departId") Long departId);
 }
