@@ -6,6 +6,6 @@ public record DepartListComplaintResponseDto(
         List<DepartComplaintResponseDto> departs
 ) {
     public static DepartListComplaintResponseDto from(List<DepartComplaintResponseDto> departs) {
-        return new DepartListComplaintResponseDto(departs);
+        return new DepartListComplaintResponseDtodeparts();
     }
 }
