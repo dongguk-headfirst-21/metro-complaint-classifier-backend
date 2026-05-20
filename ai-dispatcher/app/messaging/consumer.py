@@ -7,6 +7,7 @@ from aiokafka import AIOKafkaConsumer
 from app.db.session import get_db
 from app.db.repository.embedding_repository import EmbeddingRepository
 from app.service.embedding_service import extract_embedding
+from app.service.depart_service import classify_depart
 from app.core.config import settings
 from app.messaging.producer import publish_classification_response
 
@@ -95,7 +96,7 @@ async def _handle_message(message) -> None:
                 
                 for complaint in complaints:
                     try:
-                        embedding = extract_embedding(complaint.content)
+                        embedding = extract_embedding(complaint.title + " " + complaint.content)
                         repo.insert_complaint_embedding(complaint.id, embedding.tolist())
                     except Exception as e:
                         logger.error(f"민원 {complaint.id} 임베딩 중 에러 발생: {e}", exc_info=True)
@@ -131,7 +132,17 @@ async def _handle_message(message) -> None:
                         continue
 
                     complaint.code = best_code
-                    complaint.status = "COMPLETED"
+
+                    try:
+                        depart_id = await classify_depart(complaint, complaint_embedding, repo)
+                        if depart_id is not None:
+                            complaint.depart_id = depart_id
+                            complaint.status = "COMPLETED"
+                        else:
+                            complaint.status = "FAILED"
+                    except Exception as e:
+                        logger.error(f"민원 {complaint.id} 부서 분류 중 에러: {e}", exc_info=True)
+                        complaint.status = "FAILED"
 
                 db.commit()
                 logger.info(f"file_id={file_id} 분류 완료")

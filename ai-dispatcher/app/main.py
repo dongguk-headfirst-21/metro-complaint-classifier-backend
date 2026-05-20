@@ -27,7 +27,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 app = FastAPI(
     title="민원 처리 코드 생성 및 분류 서비스",
-    description="KoBERT + pgvector 기반 유사도 검색으로 민원 처리 코드 생성 및 자체 모델 기반으로 공고를 각 부서에 배부",
+    description="KURE-v1 + pgvector 기반 유사도 검색으로 민원 처리 코드 생성 및 자체 모델 기반으로 공고를 각 부서에 배부",
     version="1.0.0",
     lifespan=lifespan
 )

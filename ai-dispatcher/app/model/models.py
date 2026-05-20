@@ -36,7 +36,7 @@ class ComplaintEmbedding(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     complaint_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("complaint.id"), nullable=False, unique=True)
-    embedding: Mapped[list] = mapped_column(Vector(768))
+    embedding: Mapped[list] = mapped_column(Vector(1024))
     
 class Feature(Base):
     __tablename__ = "feature"
@@ -55,7 +55,7 @@ class FeatureEmbedding(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     feature_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("feature.id"), nullable=False, unique=True)
-    embedding: Mapped[list] = mapped_column(Vector(768))
+    embedding: Mapped[list] = mapped_column(Vector(1024))
 
 
 class ProcessCodeTypeEmbedding(Base):
@@ -63,4 +63,12 @@ class ProcessCodeTypeEmbedding(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     process_code_type_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("process_code_type.code"), nullable=False, unique=True)
-    embedding: Mapped[list] = mapped_column(Vector(768))
+    embedding: Mapped[list] = mapped_column(Vector(1024))
+
+
+class FeatureDepart(Base):
+    __tablename__ = "feature_depart"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    feature_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("feature.id"), nullable=False)
+    depart_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("depart.id"), nullable=False)

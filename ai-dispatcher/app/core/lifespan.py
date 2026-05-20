@@ -3,7 +3,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-from app.model.kobert import KoBERTModel
+from app.model.embedding_model import EmbeddingModel
 from app.messaging.consumer import start_consumer, stop_consumer
 from app.messaging.producer import start_producer, stop_producer
 
@@ -20,8 +20,8 @@ async def lifespan(app: FastAPI):
     
     logger.info("앱 시작 중...")
     
-    KoBERTModel.load()
-    logger.info("KoBERT 모델 로드 완료")
+    EmbeddingModel.load()
+    logger.info("임베딩 모델 로드 완료")
     
     await start_producer()
     
