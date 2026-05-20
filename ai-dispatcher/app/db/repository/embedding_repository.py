@@ -1,7 +1,7 @@
 import numpy as np
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from app.model.models import File, Complaint, ComplaintEmbedding, ProcessCodeType, Feature, FeatureEmbedding, ProcessCodeTypeEmbedding
+from app.model.models import File, Complaint, ComplaintEmbedding, ProcessCodeType, Feature, FeatureEmbedding, ProcessCodeTypeEmbedding, FeatureDepart
 
 class EmbeddingRepository:
 
@@ -44,3 +44,13 @@ class EmbeddingRepository:
 
     def insert_process_code_type_embedding(self, process_code_type_id: int, embedding: list) -> None:
         self.session.add(ProcessCodeTypeEmbedding(process_code_type_id=process_code_type_id, embedding=embedding))
+
+    def get_all_feature_embeddings_with_content(self) -> list[tuple[Feature, np.ndarray]]:
+        stmt = select(Feature, FeatureEmbedding).join(
+            FeatureEmbedding, Feature.id == FeatureEmbedding.feature_id
+        )
+        return [(feature, np.array(fe.embedding)) for feature, fe in self.session.execute(stmt).all()]
+
+    def get_depart_id_by_feature_id(self, feature_id: int) -> int | None:
+        stmt = select(FeatureDepart.depart_id).where(FeatureDepart.feature_id == feature_id)
+        return self.session.scalars(stmt).first()
