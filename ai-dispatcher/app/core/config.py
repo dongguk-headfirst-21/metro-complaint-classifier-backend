@@ -15,7 +15,11 @@ class Settings(BaseSettings):
     kafka_consumer_group_id: str
     
     embedding_model_name: str
-    
+
+    llm_model: str
+    llm_api_key: str
+    llm_base_url: str
+
     class Config:
         env_file = ".env"
 
