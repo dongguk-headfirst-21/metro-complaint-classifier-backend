@@ -95,7 +95,7 @@ async def _handle_message(message) -> None:
                 
                 for complaint in complaints:
                     try:
-                        embedding = extract_embedding(complaint.content)
+                        embedding = extract_embedding(complaint.title + " " + complaint.content)
                         repo.insert_complaint_embedding(complaint.id, embedding.tolist())
                     except Exception as e:
                         logger.error(f"민원 {complaint.id} 임베딩 중 에러 발생: {e}", exc_info=True)
