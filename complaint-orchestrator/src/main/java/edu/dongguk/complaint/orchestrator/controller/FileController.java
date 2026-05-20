@@ -54,4 +54,13 @@ public class FileController {
     public ResponseEntity<DepartListComplaintResponseDto> getFileResult(@PathVariable Long fileId) {
         return ResponseEntity.ok(fileQueryService.getFileResult(fileId));
     }
+
+    @PatchMapping(value = "/{fileId}/departs/uncheck")
+    public ResponseEntity<Void> uncheckDeparts(
+            @PathVariable Long fileId,
+            @RequestBody DepartListRequestDto requestDto
+    ) {
+        departCheckService.uncheckDeparts(fileId, requestDto);
+        return ResponseEntity.ok().build();
+    }
 }

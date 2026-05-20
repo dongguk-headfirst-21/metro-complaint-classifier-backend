@@ -17,4 +17,8 @@ public class DepartCheckService {
     public void checkDeparts(Long fileId, DepartListRequestDto requestDto){
         complaintRepository.checkComplaintsByFileIdAndDepartIds(fileId, requestDto.departIds());
     }
+
+    public void uncheckDeparts(Long fileId, DepartListRequestDto requestDto) {
+        complaintRepository.uncheckComplaintsByFileIdAndDepartIds(fileId, requestDto.departIds());
+    }
 }

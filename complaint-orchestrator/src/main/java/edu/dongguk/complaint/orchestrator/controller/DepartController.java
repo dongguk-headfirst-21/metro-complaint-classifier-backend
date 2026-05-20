@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 public class DepartController {
     private final ComplaintQueryService complaintQueryService;
 
-
     @GetMapping("/{departId}")
     public ResponseEntity<ComplaintListResponseDto> getComplaints(
             @PathVariable Long departId,
