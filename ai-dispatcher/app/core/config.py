@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     kafka_topic_classification_response: str
     kafka_consumer_group_id: str
     
-    kobert_model_name: str
+    embedding_model_name: str
     
     class Config:
         env_file = ".env"
