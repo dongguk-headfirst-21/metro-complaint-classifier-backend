@@ -26,9 +26,13 @@ async def _call_llm(user_message: str) -> str:
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": user_message},
         ],
-        max_tokens=16,
+        max_tokens=16384,
     )
-    return response.choices[0].message.content
+    choice = response.choices[0]
+    content = choice.message.content
+    if not content:
+        logger.warning("LLM 빈 응답: finish_reason=%s", choice.finish_reason)
+    return content
 
 
 async def find_best_feature_id(title: str, content: str, features: list[Feature]) -> int | None:
@@ -37,8 +41,7 @@ async def find_best_feature_id(title: str, content: str, features: list[Feature]
         logger.warning("LLM 응답이 비어 있음")
         return None
     valid_ids = {f.id for f in features}
-    cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
-    match = re.search(r"\d+", cleaned)
+    match = re.search(r"\d+", raw.strip())
     if match and (feature_id := int(match.group())) in valid_ids:
         return feature_id
     logger.warning("LLM 응답에서 유효한 feature_id 파싱 실패: %s", raw)
