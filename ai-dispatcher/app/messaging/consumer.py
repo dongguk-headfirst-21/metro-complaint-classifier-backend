@@ -111,6 +111,7 @@ async def _handle_message(message) -> None:
                         logger.warning(f"민원 {complaint.id}의 임베딩이 없습니다. 건너뜁니다.")
                         complaint.status = "FAILED"
                         complaint.failure_reason = "no_embedding_for_the_complaint"
+                        db.commit()
                         continue
 
                     best_code = None
@@ -125,10 +126,11 @@ async def _handle_message(message) -> None:
                         if similarity > best_similarity:
                             best_similarity = similarity
                             best_code = pct.code
-                    
+
                     if best_code is None:
                         complaint.status = "FAILED"
                         complaint.failure_reason = "no_embedding_for_any_process_code_type"
+                        db.commit()
                         continue
 
                     complaint.code = best_code
@@ -141,12 +143,15 @@ async def _handle_message(message) -> None:
                         else:
                             complaint.status = "FAILED"
                             complaint.failure_reason = reason
-                    except Exception as e:
+                    except BaseException as e:
                         logger.error(f"민원 {complaint.id} 부서 분류 중 에러: {e}", exc_info=True)
                         complaint.status = "FAILED"
                         complaint.failure_reason = str(e)[:100]
+                        db.commit()
+                        continue
 
-                db.commit()
+                    db.commit()
+
                 logger.info(f"file_id={file_id} 분류 완료")
                 
                 file = repo.get_file(file_id)
