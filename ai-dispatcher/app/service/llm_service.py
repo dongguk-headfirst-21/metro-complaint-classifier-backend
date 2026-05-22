@@ -33,8 +33,12 @@ async def _call_llm(user_message: str) -> str:
 
 async def find_best_feature_id(title: str, content: str, features: list[Feature]) -> int | None:
     raw = await _call_llm(_build_user_message(title, content, features))
+    if not raw:
+        logger.warning("LLM 응답이 비어 있음")
+        return None
     valid_ids = {f.id for f in features}
-    match = re.search(r"\d+", raw.strip())
+    cleaned = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+    match = re.search(r"\d+", cleaned)
     if match and (feature_id := int(match.group())) in valid_ids:
         return feature_id
     logger.warning("LLM 응답에서 유효한 feature_id 파싱 실패: %s", raw)
