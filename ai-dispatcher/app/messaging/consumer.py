@@ -134,21 +134,29 @@ async def _handle_message(message) -> None:
                     complaint.code = best_code
 
                     try:
-                        depart_id = await classify_depart(complaint, complaint_embedding, repo)
+                        depart_id, reason = await classify_depart(complaint, complaint_embedding, repo)
                         if depart_id is not None:
                             complaint.depart_id = depart_id
                             complaint.status = "COMPLETED"
                         else:
                             complaint.status = "FAILED"
+                            complaint.failure_reason = reason
                     except Exception as e:
                         logger.error(f"민원 {complaint.id} 부서 분류 중 에러: {e}", exc_info=True)
                         complaint.status = "FAILED"
+                        complaint.failure_reason = str(e)[:100]
 
                 db.commit()
                 logger.info(f"file_id={file_id} 분류 완료")
                 
                 file = repo.get_file(file_id)
-                if(file.status != "ERROR"):
+                failed = [c for c in complaints if c.status == "FAILED"]
+                if failed:
+                    file.status = "ERROR"
+                    file.error_message = "; ".join(
+                        f"complaint#{c.id}: {c.failure_reason}" for c in failed
+                    )
+                else:
                     file.status = "COMPLETED"
                 db.commit()
                 await publish_classification_response(file_id)
