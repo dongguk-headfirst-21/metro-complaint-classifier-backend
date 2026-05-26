@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     kafka_topic_embedding_trigger: str
     kafka_topic_classification_request: str
     kafka_topic_classification_response: str
+    kafka_topic_complaint_classification_request: str
+    kafka_topic_complaint_classification_response: str
     kafka_consumer_group_id: str
     
     embedding_model_name: str

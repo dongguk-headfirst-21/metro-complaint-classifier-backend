@@ -9,11 +9,14 @@ from app.db.repository.embedding_repository import EmbeddingRepository
 from app.service.embedding_service import extract_embedding
 from app.service.depart_service import classify_depart
 from app.core.config import settings
-from app.messaging.producer import publish_classification_response
+from app.messaging.producer import publish_classification_response, publish_complaint_classification_response
 
 logger = logging.getLogger(__name__)
 
 _consumer: AIOKafkaConsumer | None = None
+
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
 async def start_consumer() -> None:
     """
@@ -26,6 +29,7 @@ async def start_consumer() -> None:
     _consumer = AIOKafkaConsumer(
         settings.kafka_topic_embedding_trigger,
         settings.kafka_topic_classification_request,
+        settings.kafka_topic_complaint_classification_request,
         bootstrap_servers=settings.kafka_bootstrap_servers,
         group_id=settings.kafka_consumer_group_id,
         auto_offset_reset="earliest",
@@ -82,9 +86,6 @@ async def _handle_message(message) -> None:
                 logger.error(f"에러 발생: {e}", exc_info=True)
                 
     elif(message.topic == settings.kafka_topic_classification_request):
-        def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
-            return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
-        
         file_id = int(message.value)
         
         try:
@@ -101,7 +102,7 @@ async def _handle_message(message) -> None:
                     except Exception as e:
                         logger.error(f"민원 {complaint.id} 임베딩 중 에러 발생: {e}", exc_info=True)
                         complaint.status = "FAILED"
-                        complaint.failure_reason = str(e)
+                        complaint.failure_reason = str(e)[:100]
                 db.commit()
                 logger.info("complaint 임베딩 완료")
 
@@ -178,3 +179,73 @@ async def _handle_message(message) -> None:
                     await publish_classification_response(file_id)
             except Exception as inner_e:
                 logger.error(f"파일 실패 상태 저장 실패: {inner_e}")
+
+    elif message.topic == settings.kafka_topic_complaint_classification_request:
+        complaint_id = int(message.value)
+
+        try:
+            with get_db() as db:
+                repo = EmbeddingRepository(db)
+                complaint = repo.get_complaint_by_id(complaint_id)
+                process_code_types = repo.get_all_process_code_types()
+
+                try:
+                    embedding = extract_embedding(complaint.title + " " + complaint.content)
+                    repo.insert_complaint_embedding(complaint.id, embedding.tolist())
+                    db.commit()
+                except Exception as e:
+                    logger.error(f"민원 {complaint_id} 임베딩 중 에러: {e}", exc_info=True)
+                    complaint.status = "FAILED"
+                    complaint.failure_reason = str(e)[:100]
+                    db.commit()
+                    await publish_complaint_classification_response(complaint_id)
+                    return
+
+                complaint_embedding = repo.get_complaint_embedding(complaint.id)
+                best_code, best_similarity = None, -1.0
+                for pct in process_code_types:
+                    pct_embedding = repo.get_process_code_type_embedding(pct.code)
+                    if pct_embedding is None:
+                        continue
+                    similarity = cosine_similarity(complaint_embedding, pct_embedding)
+                    if similarity > best_similarity:
+                        best_similarity = similarity
+                        best_code = pct.code
+
+                if best_code is None:
+                    complaint.status = "FAILED"
+                    complaint.failure_reason = "no_embedding_for_any_process_code_type"
+                    db.commit()
+                    await publish_complaint_classification_response(complaint_id)
+                    return
+
+                complaint.code = best_code
+
+                try:
+                    depart_id, reason = await classify_depart(complaint, complaint_embedding, repo)
+                    if depart_id is not None:
+                        complaint.depart_id = depart_id
+                        complaint.status = "COMPLETED"
+                    else:
+                        complaint.status = "FAILED"
+                        complaint.failure_reason = reason
+                except BaseException as e:
+                    logger.error(f"민원 {complaint_id} 부서 분류 중 에러: {e}", exc_info=True)
+                    complaint.status = "FAILED"
+                    complaint.failure_reason = str(e)[:100]
+
+                db.commit()
+                await publish_complaint_classification_response(complaint_id)
+
+        except Exception as e:
+            logger.error(f"단건 민원 분류 중 에러: {e}", exc_info=True)
+            try:
+                with get_db() as db:
+                    repo = EmbeddingRepository(db)
+                    complaint = repo.get_complaint_by_id(complaint_id)
+                    complaint.status = "FAILED"
+                    complaint.failure_reason = str(e)[:100]
+                    db.commit()
+                    await publish_complaint_classification_response(complaint_id)
+            except Exception as inner_e:
+                logger.error(f"단건 민원 실패 상태 저장 실패: {inner_e}")

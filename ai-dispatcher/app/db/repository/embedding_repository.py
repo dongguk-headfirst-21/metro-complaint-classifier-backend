@@ -15,6 +15,10 @@ class EmbeddingRepository:
     def get_all_complaints_in_the_file(self, file_id: int) -> list[Complaint]:
         stmt = select(Complaint).where(Complaint.file_id == file_id)
         return list(self.session.scalars(stmt).all())
+
+    def get_complaint_by_id(self, complaint_id: int) -> Complaint | None:
+        stmt = select(Complaint).where(Complaint.id == complaint_id)
+        return self.session.scalars(stmt).first()
     
     def get_complaint_embedding(self, complaint_id) -> np.ndarray:
         stmt = select(ComplaintEmbedding).where(ComplaintEmbedding.complaint_id == complaint_id)
