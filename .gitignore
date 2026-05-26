@@ -50,7 +50,6 @@ bin/
 *.jar
 *.war
 *.ear
-!**/gradle/wrapper/gradle-wrapper.jar
 spring-shell.log
 
 # ======================
