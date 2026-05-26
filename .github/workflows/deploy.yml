@@ -1,0 +1,163 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REGISTRY: 522818447551.dkr.ecr.ap-northeast-2.amazonaws.com
+  ECS_CLUSTER: dgu-metro-cluster
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── 빌드 & 푸시 ────────────────────────────────────────────
+
+      - name: Build and push complaint-orchestrator
+        run: |
+          IMAGE=$ECR_REGISTRY/dgu-metro/complaint-orchestrator
+          docker build -t $IMAGE:${{ github.sha }} ./complaint-orchestrator
+          docker push $IMAGE:${{ github.sha }}
+          docker tag $IMAGE:${{ github.sha }} $IMAGE:latest
+          docker push $IMAGE:latest
+
+      - name: Build and push ai-dispatcher
+        run: |
+          IMAGE=$ECR_REGISTRY/dgu-metro/ai-dispatcher
+          docker build -t $IMAGE:${{ github.sha }} ./ai-dispatcher
+          docker push $IMAGE:${{ github.sha }}
+          docker tag $IMAGE:${{ github.sha }} $IMAGE:latest
+          docker push $IMAGE:latest
+
+      - name: Build and push nginx
+        run: |
+          IMAGE=$ECR_REGISTRY/dgu-metro/nginx
+          docker build -t $IMAGE:${{ github.sha }} ./nginx
+          docker push $IMAGE:${{ github.sha }}
+          docker tag $IMAGE:${{ github.sha }} $IMAGE:latest
+          docker push $IMAGE:latest
+
+      # ── ECS 배포 ───────────────────────────────────────────────
+
+      - name: Deploy complaint-orchestrator
+        run: |
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition metro-complaint-orchestrator \
+            --query taskDefinition --output json)
+
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq \
+            --arg image "$ECR_REGISTRY/dgu-metro/complaint-orchestrator:${{ github.sha }}" \
+            --arg profiles "${{ secrets.SPRING_PROFILES_ACTIVE }}" \
+            --arg db_url "${{ secrets.DB_URL }}" \
+            --arg db_user "${{ secrets.DB_USER }}" \
+            --arg db_password "${{ secrets.DB_PASSWORD }}" \
+            --arg kafka "${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}" \
+            'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+             .containerDefinitions[0].image = $image |
+             (.containerDefinitions[0].environment[] | select(.name == "SPRING_PROFILES_ACTIVE")).value = $profiles |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_URL")).value = $db_url |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_USER")).value = $db_user |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_PASSWORD")).value = $db_password |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_BOOTSTRAP_SERVERS")).value = $kafka')
+
+          NEW_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF" \
+            | jq -r '.taskDefinition.taskDefinitionArn')
+
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service metro-complaint-orchestrator \
+            --task-definition $NEW_ARN \
+            --force-new-deployment
+
+      - name: Deploy ai-dispatcher
+        run: |
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition metro-ai-dispatcher \
+            --query taskDefinition --output json)
+
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq \
+            --arg image "$ECR_REGISTRY/dgu-metro/ai-dispatcher:${{ github.sha }}" \
+            --arg db_host "${{ secrets.DB_HOST }}" \
+            --arg db_port "${{ secrets.DB_PORT }}" \
+            --arg db_name "${{ secrets.DB_NAME }}" \
+            --arg db_user "${{ secrets.DB_USER }}" \
+            --arg db_password "${{ secrets.DB_PASSWORD }}" \
+            --arg kafka "${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}" \
+            --arg topic_emb "${{ secrets.KAFKA_TOPIC_EMBEDDING_TRIGGER }}" \
+            --arg topic_cls_req "${{ secrets.KAFKA_TOPIC_CLASSIFICATION_REQUEST }}" \
+            --arg topic_cls_res "${{ secrets.KAFKA_TOPIC_CLASSIFICATION_RESPONSE }}" \
+            --arg topic_cmp_req "${{ secrets.KAFKA_TOPIC_COMPLAINT_CLASSIFICATION_REQUEST }}" \
+            --arg topic_cmp_res "${{ secrets.KAFKA_TOPIC_COMPLAINT_CLASSIFICATION_RESPONSE }}" \
+            --arg group_id "${{ secrets.KAFKA_CONSUMER_GROUP_ID }}" \
+            --arg emb_model "${{ secrets.EMBEDDING_MODEL_NAME }}" \
+            --arg llm_model "${{ secrets.LLM_MODEL }}" \
+            --arg llm_key "${{ secrets.LLM_API_KEY }}" \
+            --arg llm_url "${{ secrets.LLM_BASE_URL }}" \
+            'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+             .containerDefinitions[0].image = $image |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_HOST")).value = $db_host |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_PORT")).value = $db_port |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_NAME")).value = $db_name |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_USER")).value = $db_user |
+             (.containerDefinitions[0].environment[] | select(.name == "DB_PASSWORD")).value = $db_password |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_BOOTSTRAP_SERVERS")).value = $kafka |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_TOPIC_EMBEDDING_TRIGGER")).value = $topic_emb |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_TOPIC_CLASSIFICATION_REQUEST")).value = $topic_cls_req |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_TOPIC_CLASSIFICATION_RESPONSE")).value = $topic_cls_res |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_TOPIC_COMPLAINT_CLASSIFICATION_REQUEST")).value = $topic_cmp_req |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_TOPIC_COMPLAINT_CLASSIFICATION_RESPONSE")).value = $topic_cmp_res |
+             (.containerDefinitions[0].environment[] | select(.name == "KAFKA_CONSUMER_GROUP_ID")).value = $group_id |
+             (.containerDefinitions[0].environment[] | select(.name == "EMBEDDING_MODEL_NAME")).value = $emb_model |
+             (.containerDefinitions[0].environment[] | select(.name == "LLM_MODEL")).value = $llm_model |
+             (.containerDefinitions[0].environment[] | select(.name == "LLM_API_KEY")).value = $llm_key |
+             (.containerDefinitions[0].environment[] | select(.name == "LLM_BASE_URL")).value = $llm_url')
+
+          NEW_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF" \
+            | jq -r '.taskDefinition.taskDefinitionArn')
+
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service metro-ai-dispatcher \
+            --task-definition $NEW_ARN \
+            --force-new-deployment
+
+      - name: Deploy nginx
+        run: |
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition metro-nginx \
+            --query taskDefinition --output json)
+
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq \
+            --arg image "$ECR_REGISTRY/dgu-metro/nginx:${{ github.sha }}" \
+            'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+             .containerDefinitions[0].image = $image')
+
+          NEW_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$NEW_TASK_DEF" \
+            | jq -r '.taskDefinition.taskDefinitionArn')
+
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service metro-nginx \
+            --task-definition $NEW_ARN \
+            --force-new-deployment
