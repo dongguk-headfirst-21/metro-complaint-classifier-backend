@@ -4,10 +4,11 @@ import edu.dongguk.complaint.orchestrator.domain.complaint.Complaint;
 import edu.dongguk.complaint.orchestrator.domain.complaint.ComplaintStatus;
 import edu.dongguk.complaint.orchestrator.domain.file.File;
 import edu.dongguk.complaint.orchestrator.domain.file.FileStatus;
+import edu.dongguk.complaint.orchestrator.event.FileDispatchCompleteEvent;
 import edu.dongguk.complaint.orchestrator.repository.ComplaintRepository;
 import edu.dongguk.complaint.orchestrator.repository.FileRepository;
-import edu.dongguk.complaint.orchestrator.service.sse.SseEmitterService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,7 @@ public class FileKafkaConsumer {
 
     private final FileRepository fileRepository;
     private final ComplaintRepository complaintRepository;
-    private final SseEmitterService sseEmitterService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @KafkaListener(topics = "file-dispatch-complete", groupId = "complaint-group")
     @Transactional
@@ -41,6 +42,6 @@ public class FileKafkaConsumer {
         else
             newStatus = FileStatus.ERROR;
 
-        sseEmitterService.notify(id, newStatus);
+        eventPublisher.publishEvent(new FileDispatchCompleteEvent(id, newStatus));
     }
 }

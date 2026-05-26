@@ -3,13 +3,13 @@ package edu.dongguk.complaint.orchestrator.service.command;
 import edu.dongguk.complaint.orchestrator.domain.complaint.Complaint;
 import edu.dongguk.complaint.orchestrator.domain.file.File;
 import edu.dongguk.complaint.orchestrator.domain.file.FileStatus;
+import edu.dongguk.complaint.orchestrator.event.FileUploadedEvent;
 import edu.dongguk.complaint.orchestrator.global.util.ComplaintData;
 import edu.dongguk.complaint.orchestrator.global.util.ExcelParser;
 import edu.dongguk.complaint.orchestrator.repository.ComplaintRepository;
 import edu.dongguk.complaint.orchestrator.repository.FileRepository;
-import edu.dongguk.complaint.orchestrator.service.kafka.FileKafkaProducer;
-import edu.dongguk.complaint.orchestrator.service.sse.SseEmitterService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,8 +24,7 @@ public class FileUploadService {
 
     private final FileRepository fileRepository;
     private final ComplaintRepository complaintRepository;
-    private final FileKafkaProducer kafkaProducer;
-    private final SseEmitterService sseEmitterService;
+    private final ApplicationEventPublisher eventPublisher;
     private final ExcelParser excelParser;
 
     public Long uploadFile(MultipartFile multipartFile) throws IOException {
@@ -43,9 +42,7 @@ public class FileUploadService {
         file.updateRowCount(complaints.size());
         fileRepository.save(file);
 
-        sseEmitterService.notify(file.getId(), FileStatus.PENDING);
-
-        kafkaProducer.sendAnalysisRequest(file.getId());
+        eventPublisher.publishEvent(new FileUploadedEvent(file.getId()));
 
         return file.getId();
     }
