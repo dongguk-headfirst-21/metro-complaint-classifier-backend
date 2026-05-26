@@ -29,6 +29,18 @@ jobs:
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # ── JAR 빌드 ───────────────────────────────────────────────
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build JAR
+        working-directory: complaint-orchestrator
+        run: ./gradlew bootJar -x test --no-daemon
+
       # ── 빌드 & 푸시 ────────────────────────────────────────────
 
       - name: Build and push complaint-orchestrator
