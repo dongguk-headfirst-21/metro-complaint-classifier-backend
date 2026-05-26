@@ -2,7 +2,7 @@ services:
   spring:
     build:
       context: ./complaint-orchestrator
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.onprem
     env_file: .env
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
