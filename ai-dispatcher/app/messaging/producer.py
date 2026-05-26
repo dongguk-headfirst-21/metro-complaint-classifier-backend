@@ -39,7 +39,7 @@ async def publish_classification_response(file_id: int) -> None:
     """
     예측 완료 토픽 발행
     """
-    
+
     if _producer is None:
         logger.error("프로듀서가 초기화되지 않음")
         return
@@ -48,5 +48,17 @@ async def publish_classification_response(file_id: int) -> None:
         settings.kafka_topic_classification_response,
         value=str(file_id)
     )
-    
+
     logger.info("예측 결과 발행 완료")
+
+async def publish_complaint_classification_response(complaint_id: int) -> None:
+    if _producer is None:
+        logger.error("프로듀서가 초기화되지 않음")
+        return
+
+    await _producer.send_and_wait(
+        settings.kafka_topic_complaint_classification_response,
+        value=str(complaint_id)
+    )
+
+    logger.info("단건 민원 예측 결과 발행 완료")

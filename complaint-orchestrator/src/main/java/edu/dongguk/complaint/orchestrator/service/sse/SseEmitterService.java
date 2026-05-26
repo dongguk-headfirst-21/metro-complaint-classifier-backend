@@ -1,10 +1,12 @@
 package edu.dongguk.complaint.orchestrator.service.sse;
 
+import edu.dongguk.complaint.orchestrator.domain.complaint.ComplaintStatus;
 import edu.dongguk.complaint.orchestrator.domain.file.FileStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +32,21 @@ public class SseEmitterService {
         emitters.forEach((id, emitter) -> {
             try {
                 emitter.send(SseEmitter.event().name("file-status").data(data));
+            } catch (IOException e) {
+                emitters.remove(id);
+            }
+        });
+    }
+
+    public void notifyComplaintResult(Long complaintId, Long departId, Integer code, String failureReason) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("complaintId", complaintId);
+        data.put("departId", departId);
+        data.put("code", code);
+        data.put("failureReason", failureReason);
+        emitters.forEach((id, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().name("complaint-status").data(data));
             } catch (IOException e) {
                 emitters.remove(id);
             }
