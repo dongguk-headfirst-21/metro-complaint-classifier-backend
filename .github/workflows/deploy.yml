@@ -142,7 +142,9 @@ jobs:
              (.containerDefinitions[0].environment[] | select(.name == "EMBEDDING_MODEL_NAME")).value = $emb_model |
              (.containerDefinitions[0].environment[] | select(.name == "LLM_MODEL")).value = $llm_model |
              (.containerDefinitions[0].environment[] | select(.name == "LLM_API_KEY")).value = $llm_key |
-             (.containerDefinitions[0].environment[] | select(.name == "LLM_BASE_URL")).value = $llm_url')
+             (.containerDefinitions[0].environment[] | select(.name == "LLM_BASE_URL")).value = $llm_url |
+             .volumes = [{"name": "huggingface-cache", "host": {"sourcePath": "/opt/huggingface-cache"}}] |
+             .containerDefinitions[0].mountPoints = [{"containerPath": "/root/.cache/huggingface", "sourceVolume": "huggingface-cache", "readOnly": false}]')
 
           NEW_ARN=$(aws ecs register-task-definition \
             --cli-input-json "$NEW_TASK_DEF" \
