@@ -4,6 +4,7 @@ import edu.dongguk.complaint.orchestrator.dto.request.DepartListRequestDto;
 import edu.dongguk.complaint.orchestrator.dto.response.DepartListComplaintResponseDto;
 import edu.dongguk.complaint.orchestrator.dto.response.FileListResponseDto;
 import edu.dongguk.complaint.orchestrator.service.command.DepartCheckService;
+import edu.dongguk.complaint.orchestrator.service.command.FileDeleteService;
 import edu.dongguk.complaint.orchestrator.service.command.FileUploadService;
 import edu.dongguk.complaint.orchestrator.service.query.FileQueryService;
 import edu.dongguk.complaint.orchestrator.service.sse.SseEmitterService;
@@ -25,6 +26,7 @@ public class FileController {
     private final FileUploadService fileUploadService;
     private final SseEmitterService sseEmitterService;
     private final DepartCheckService departCheckService;
+    private final FileDeleteService fileDeleteService;
 
 
     @GetMapping
@@ -62,5 +64,11 @@ public class FileController {
     ) {
         departCheckService.uncheckDeparts(fileId, requestDto);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{fileId}")
+    public ResponseEntity<Void> deleteFile(@PathVariable Long fileId) {
+        fileDeleteService.deleteFile(fileId);
+        return ResponseEntity.noContent().build();
     }
 }
