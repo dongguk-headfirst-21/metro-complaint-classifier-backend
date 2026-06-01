@@ -56,7 +56,7 @@ public class FileQueryService {
                 .map(row -> {
                     Depart depart = (Depart) row[0];
                     Long count = (Long) row[1];
-                    boolean isChecked = !uncheckedDeparts.contains(depart.getId());
+                    boolean isChecked = uncheckedDeparts.stream().noneMatch(d -> d.getId().equals(depart.getId()));
                     return DepartComplaintResponseDto.from(depart, count, isChecked);
                 })
                 .toList();
