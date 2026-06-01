@@ -22,14 +22,13 @@ import java.util.ArrayList;
 public class FileQueryService {
     private final FileRepository fileRepository;
     private final ComplaintRepository complaintRepository;
-    private final DepartRepository departRepository;
 
     public FileListResponseDto getfiles() {
         List<File> files = fileRepository.findAll();
-        long totalDeparts = departRepository.count();
 
         List<FileResponseDto> fileResponseDtoList = files.stream()
                 .map(file -> {
+                    long totalDeparts = complaintRepository.countDistinctDepartsByFileId(file.getId());
                     long checkedDeparts = complaintRepository.countCheckedDepartsByFileId(file.getId());
                     String checkedDepartCount = checkedDeparts + "/" + totalDeparts;
                     return FileResponseDto.from(file, checkedDepartCount);
