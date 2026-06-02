@@ -38,4 +38,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     @Modifying
     @Query("UPDATE Complaint c SET c.isChecked = false WHERE c.file.id = :fileId AND c.depart.id IN :departIds")
     void uncheckComplaintsByFileIdAndDepartIds(@Param("fileId") Long fileId, @Param("departIds") List<Long> departIds);
+
+    // 특정 파일의 민원이 배부된 부서의 총 개수를 반환하는 query
+    @Query("SELECT COUNT(DISTINCT c.depart.id) FROM Complaint c WHERE c.file.id = :fileId AND c.depart IS NOT NULL")
+    long countDistinctDepartsByFileId(@Param("fileId") Long fileId);
 }
