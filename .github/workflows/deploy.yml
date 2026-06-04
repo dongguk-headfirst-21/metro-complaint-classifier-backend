@@ -158,14 +158,27 @@ jobs:
 
       - name: Deploy nginx
         run: |
+          SSL_CERT_ARN=$(aws secretsmanager describe-secret \
+            --secret-id metro/nginx/ssl-cert \
+            --query ARN --output text)
+          SSL_KEY_ARN=$(aws secretsmanager describe-secret \
+            --secret-id metro/nginx/ssl-key \
+            --query ARN --output text)
+
           TASK_DEF=$(aws ecs describe-task-definition \
             --task-definition metro-nginx \
             --query taskDefinition --output json)
 
           NEW_TASK_DEF=$(echo $TASK_DEF | jq \
             --arg image "$ECR_REGISTRY/dgu-metro/nginx:${{ github.sha }}" \
+            --arg ssl_cert_arn "$SSL_CERT_ARN" \
+            --arg ssl_key_arn "$SSL_KEY_ARN" \
             'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
-             .containerDefinitions[0].image = $image')
+             .containerDefinitions[0].image = $image |
+             .containerDefinitions[0].secrets = [
+               {"name": "SSL_CERT", "valueFrom": $ssl_cert_arn},
+               {"name": "SSL_KEY", "valueFrom": $ssl_key_arn}
+             ]')
 
           NEW_ARN=$(aws ecs register-task-definition \
             --cli-input-json "$NEW_TASK_DEF" \
