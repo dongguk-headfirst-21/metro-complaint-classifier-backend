@@ -1,0 +1,52 @@
+name: Issue SSL Certificate
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  issue-cert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install certbot
+        run: pip install certbot certbot-dns-route53
+
+      - name: Issue certificate
+        run: |
+          certbot certonly \
+            --dns-route53 \
+            --domain dguseoulmetro.xyz \
+            --email ${{ secrets.CERTBOT_EMAIL }} \
+            --agree-tos \
+            --non-interactive \
+            --no-eff-email
+
+      - name: Store certs in Secrets Manager
+        run: |
+          CERT=$(cat /etc/letsencrypt/live/dguseoulmetro.xyz/fullchain.pem)
+          KEY=$(cat /etc/letsencrypt/live/dguseoulmetro.xyz/privkey.pem)
+
+          aws secretsmanager create-secret \
+            --name metro/nginx/ssl-cert \
+            --secret-string "$CERT" 2>/dev/null || \
+          aws secretsmanager put-secret-value \
+            --secret-id metro/nginx/ssl-cert \
+            --secret-string "$CERT"
+
+          aws secretsmanager create-secret \
+            --name metro/nginx/ssl-key \
+            --secret-string "$KEY" 2>/dev/null || \
+          aws secretsmanager put-secret-value \
+            --secret-id metro/nginx/ssl-key \
+            --secret-string "$KEY"
+
+          echo "Cert stored successfully"
