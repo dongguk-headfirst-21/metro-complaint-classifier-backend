@@ -3,6 +3,10 @@ name: Issue SSL Certificate
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   AWS_REGION: ap-northeast-2
 
@@ -18,11 +22,11 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install certbot
-        run: pip install certbot certbot-dns-route53
+        run: sudo pip3 install certbot certbot-dns-route53
 
       - name: Issue certificate
         run: |
-          certbot certonly \
+          sudo -E certbot certonly \
             --dns-route53 \
             --domain dguseoulmetro.xyz \
             --email ${{ secrets.CERTBOT_EMAIL }} \
@@ -32,8 +36,8 @@ jobs:
 
       - name: Store certs in Secrets Manager
         run: |
-          CERT=$(cat /etc/letsencrypt/live/dguseoulmetro.xyz/fullchain.pem)
-          KEY=$(cat /etc/letsencrypt/live/dguseoulmetro.xyz/privkey.pem)
+          CERT=$(sudo cat /etc/letsencrypt/live/dguseoulmetro.xyz/fullchain.pem)
+          KEY=$(sudo cat /etc/letsencrypt/live/dguseoulmetro.xyz/privkey.pem)
 
           aws secretsmanager create-secret \
             --name metro/nginx/ssl-cert \
