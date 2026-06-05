@@ -19,9 +19,9 @@ import java.util.List;
 public class ComplaintQueryService {
     private final ComplaintRepository complaintRepository;
 
-    public ComplaintListResponseDto getComplaints(Long departId, Pageable pageable) {
+    public ComplaintListResponseDto getComplaints(Long fileId, Long departId, Pageable pageable) {
 
-        Slice<Complaint> slice = complaintRepository.findByDepartId(departId, pageable);
+        Slice<Complaint> slice = complaintRepository.findByFileIdAndDepartId(fileId, departId, pageable);
 
         List<ComplaintResponseDto> complaints = slice
                 .stream()

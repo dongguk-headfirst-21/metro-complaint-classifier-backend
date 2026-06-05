@@ -13,7 +13,9 @@ import java.util.List;
 
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     List<Complaint> findAllByFileId(Long fileId);
-    Slice<Complaint> findByDepartId(Long departId, Pageable pageable);
+
+    // 쿼리메서드로 구현, 단건 민원(file_id = null)은 자동으로 제외됨
+    Slice<Complaint> findByFileIdAndDepartId(Long fileId, Long departId, Pageable pageable);
 
     @Query("SELECT COUNT(DISTINCT c.depart.id) FROM Complaint c WHERE c.file.id = :fileId AND c.isChecked = true")
     long countCheckedDepartsByFileId(@Param("fileId") Long fileId);
