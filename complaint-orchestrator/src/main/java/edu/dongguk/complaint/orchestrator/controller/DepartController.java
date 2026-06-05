@@ -17,9 +17,10 @@ public class DepartController {
     @GetMapping("/{departId}")
     public ResponseEntity<ComplaintListResponseDto> getComplaints(
             @PathVariable Long departId,
+            @RequestParam Long fileId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int  size){
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(complaintQueryService.getComplaints(departId,  pageable));
+        return ResponseEntity.ok(complaintQueryService.getComplaints(fileId, departId,  pageable));
     }
 }
